@@ -5,6 +5,7 @@
 #include "include/secp256k1.h"
 #include "include/secp256k1_ecdh.h"
 #include "include/secp256k1_recovery.h"
+#include "include/secp256k1_schnorrsig.h"
 
 
 SECP256K1_API jlong JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1ctx_1clone
@@ -74,7 +75,7 @@ SECP256K1_API jobjectArray JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1e
   (JNIEnv* env, jclass classObject, jobject byteBufferObject, jlong ctx_l)
 {
   secp256k1_context *ctx = (secp256k1_context*)(uintptr_t)ctx_l;
-  unsigned char* data = (unsigned char*) (*env)->GetDirectBufferAddress(env, byteBufferObject);
+  unsigned char* data = (*env)->GetDirectBufferAddress(env, byteBufferObject);
   unsigned char* secKey = (unsigned char*) (data + 32);
 
   jobjectArray retArray;
@@ -459,4 +460,161 @@ SECP256K1_API jobjectArray JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1e
   (void)classObject;
 
   return retArray;
+}
+
+SECP256K1_API jobjectArray JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1schnorrsig_1sign
+  (JNIEnv* env, jclass classObject, jobject byteBufferObject, jlong ctx_l)
+{
+  secp256k1_context *ctx = (secp256k1_context*)(uintptr_t)ctx_l;
+  unsigned char* msg32 = (*env)->GetDirectBufferAddress(env, byteBufferObject);
+  unsigned char* seckey = (unsigned char*)(msg32 + 32);
+  unsigned char* rand32 = (unsigned char*)(seckey + 32);
+
+  jobjectArray retArray;
+  jbyteArray sigArray, intsByteArray;
+  unsigned char intsarray[1];
+  secp256k1_schnorrsig sig;
+  unsigned char output[64];
+
+  int ret = secp256k1_schnorrsig_sign(ctx, &sig, msg32, seckey, NULL, rand32);
+
+  if (ret) {
+    int ret2 = secp256k1_schnorrsig_serialize(ctx, output, &sig); (void)ret2;
+  }
+
+  intsarray[0] = ret;
+
+  retArray = (*env)->NewObjectArray(env, 2,
+    (*env)->FindClass(env, "[B"),
+    (*env)->NewByteArray(env, 1));
+
+  sigArray = (*env)->NewByteArray(env, 64);
+  (*env)->SetByteArrayRegion(env, sigArray, 0, 64, (jbyte*)output);
+  (*env)->SetObjectArrayElement(env, retArray, 0, sigArray);
+
+  intsByteArray = (*env)->NewByteArray(env, 1);
+  (*env)->SetByteArrayRegion(env, intsByteArray, 0, 1, (jbyte*)intsarray);
+  (*env)->SetObjectArrayElement(env, retArray, 1, intsByteArray);
+
+  (void)classObject;
+
+  return retArray;
+}
+
+int constant_nonce_function(unsigned char *nonce32, const unsigned char *msg32, const unsigned char *key32, const unsigned char *xonly_pk32, const unsigned char *algo16, void *data, unsigned int counter) {
+  memcpy(nonce32, (const unsigned char*)data, 32);
+  return 1;
+}
+
+const secp256k1_nonce_function_extended constant_nonce = constant_nonce_function;
+
+SECP256K1_API jobjectArray JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1schnorrsig_1sign_1with_1nonce
+  (JNIEnv* env, jclass classObject, jobject byteBufferObject, jlong ctx_l)
+{
+  secp256k1_context *ctx = (secp256k1_context*)(uintptr_t)ctx_l;
+  unsigned char* msg32 = (*env)->GetDirectBufferAddress(env, byteBufferObject);
+  unsigned char* seckey = (unsigned char*)(msg32 + 32);
+  unsigned char* nonce = (unsigned char*)(seckey + 32);
+
+  jobjectArray retArray;
+  jbyteArray sigArray, intsByteArray;
+  unsigned char intsarray[1];
+  secp256k1_schnorrsig sig;
+  unsigned char output[64];
+
+  int ret = secp256k1_schnorrsig_sign(ctx, &sig, msg32, seckey, constant_nonce, nonce);
+
+  if (ret) {
+    int ret2 = secp256k1_schnorrsig_serialize(ctx, output, &sig); (void)ret2;
+  }
+
+  intsarray[0] = ret;
+
+  retArray = (*env)->NewObjectArray(env, 2,
+    (*env)->FindClass(env, "[B"),
+    (*env)->NewByteArray(env, 1));
+
+  sigArray = (*env)->NewByteArray(env, 64);
+  (*env)->SetByteArrayRegion(env, sigArray, 0, 64, (jbyte*)output);
+  (*env)->SetObjectArrayElement(env, retArray, 0, sigArray);
+
+  intsByteArray = (*env)->NewByteArray(env, 1);
+  (*env)->SetByteArrayRegion(env, intsByteArray, 0, 1, (jbyte*)intsarray);
+  (*env)->SetObjectArrayElement(env, retArray, 1, intsByteArray);
+
+  (void)classObject;
+
+  return retArray;
+}
+
+SECP256K1_API jobjectArray JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1schnorrsig_1compute_1sigpoint
+  (JNIEnv* env, jclass classObject, jobject byteBufferObject, jlong ctx_l, jboolean compressed)
+{
+  secp256k1_context *ctx = (secp256k1_context*)(uintptr_t)ctx_l;
+  unsigned char* msg32 = (*env)->GetDirectBufferAddress(env, byteBufferObject);
+  unsigned char* nonce32 = (unsigned char*)(msg32 + 32);
+  unsigned char* pubkey32 = (unsigned char*)(nonce32 + 32);
+
+  secp256k1_xonly_pubkey pubkey;
+  secp256k1_pubkey sigpoint;
+  unsigned char intsarray[2];
+  jobjectArray retArray;
+  jbyteArray pointArray, intsByteArray;
+  unsigned char outputSer[65];
+  size_t outputLen = 65;
+
+  int ret = secp256k1_xonly_pubkey_parse(ctx, &pubkey, pubkey32);
+
+  if (ret) {
+    ret = secp256k1_schnorrsig_compute_sigpoint(ctx, &sigpoint, msg32, nonce32, &pubkey);
+  }
+
+  if( ret ) {
+    int ret2 = secp256k1_ec_pubkey_serialize(ctx, outputSer, &outputLen, &sigpoint, compressed ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);(void)ret2;
+  }
+
+  intsarray[0] = outputLen;
+  intsarray[1] = ret;
+
+  retArray = (*env)->NewObjectArray(env, 2,
+    (*env)->FindClass(env, "[B"),
+    (*env)->NewByteArray(env, 1));
+
+  pointArray = (*env)->NewByteArray(env, outputLen);
+    (*env)->SetByteArrayRegion(env, pointArray, 0, outputLen, (jbyte*)outputSer);
+    (*env)->SetObjectArrayElement(env, retArray, 0, pointArray);
+
+  intsByteArray = (*env)->NewByteArray(env, 2);
+    (*env)->SetByteArrayRegion(env, intsByteArray, 0, 2, (jbyte*)intsarray);
+    (*env)->SetObjectArrayElement(env, retArray, 1, intsByteArray);
+
+  (void)classObject;
+
+  return retArray;
+}
+
+SECP256K1_API jint JNICALL Java_org_bitcoin_NativeSecp256k1_secp256k1_1schnorrsig_1verify
+  (JNIEnv* env, jclass classObject, jobject byteBufferObject, jlong ctx_l)
+{
+  secp256k1_context *ctx = (secp256k1_context*)(uintptr_t)ctx_l;
+  unsigned char* sig64 = (*env)->GetDirectBufferAddress(env, byteBufferObject);
+  unsigned char* msg32 = (unsigned char*)(sig64 + 64);
+  unsigned char* pubx32 = (unsigned char*)(msg32 + 32);
+
+  secp256k1_xonly_pubkey pubx;
+  secp256k1_schnorrsig sig;
+
+  int ret = secp256k1_xonly_pubkey_parse(ctx, &pubx, pubx32);
+
+  if (ret) {
+    ret = secp256k1_schnorrsig_parse(ctx, &sig, sig64);
+  }
+
+  if (ret) {
+    ret = secp256k1_schnorrsig_verify(ctx, &sig, msg32, &pubx);
+  }
+
+  (void)classObject;
+
+  return ret;
 }
