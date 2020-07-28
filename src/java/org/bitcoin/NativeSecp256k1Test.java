@@ -102,6 +102,33 @@ public class NativeSecp256k1Test {
     }
 
     /**
+     * This tests signWithEntropy() for a valid secretkey
+     */
+    public static void testSignWithEntropyPos() throws AssertFailException{
+
+        byte[] data = DatatypeConverter.parseHexBinary("53702647283D86B3D6410ADEF184EC608372CC3DD8B9202795D731EB1EA54275");
+        byte[] sec = DatatypeConverter.parseHexBinary("B4F62DE42D38D5D24B66FF01761C3FD0A6E7C8B719E0DC54D168FA013BFAF97F");
+        byte[] entropy = DatatypeConverter.parseHexBinary("EDF312C904B610B11442320FFB94C4F976831051A481A17176CE2B81EB3A8B6F");
+
+        byte[] resultArr = NativeSecp256k1.signWithEntropy(data, sec, entropy);
+        String sigString = DatatypeConverter.printHexBinary(resultArr);
+        assertEquals( sigString, "30450221009D9714BE0CE9A3FD08497125C6D01362FDE2FF118FC817FDB14EE4C38CADFB7A022033B082E161F7D75ABC25642ED71226049DC59EC14AB19DF2A8EFEA47A6C75FAC" , "testSignWithEntropyPos");
+    }
+
+    /**
+     * This tests signWithEntropy() for a invalid secretkey
+     */
+    public static void testSignWithEntropyNeg() throws AssertFailException{
+        byte[] data = DatatypeConverter.parseHexBinary("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A90"); //sha256hash of "testing"
+        byte[] sec = DatatypeConverter.parseHexBinary("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+        byte[] entropy = DatatypeConverter.parseHexBinary("EDF312C904B610B11442320FFB94C4F976831051A481A17176CE2B81EB3A8B6F");
+
+        byte[] resultArr = NativeSecp256k1.signWithEntropy(data, sec, entropy);
+        String sigString = DatatypeConverter.printHexBinary(resultArr);
+        assertEquals( sigString, "" , "testSignWithEntropyNeg");
+    }
+
+    /**
       * This tests private key tweak-add
       */
     public static void testPrivKeyTweakAdd() throws AssertFailException {
@@ -231,6 +258,10 @@ public class NativeSecp256k1Test {
         //Test sign() success/fail
         testSignPos();
         testSignNeg();
+
+        //Test signWithEntropy() success/fail
+        testSignWithEntropyPos();
+        testSignWithEntropyNeg();
 
         //Test privKeyTweakAdd()
         testPrivKeyTweakAdd();
