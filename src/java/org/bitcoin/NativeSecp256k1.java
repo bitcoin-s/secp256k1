@@ -17,6 +17,7 @@
 
 package org.bitcoin;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -59,7 +60,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(data);
         byteBuff.put(signature);
         byteBuff.put(pub);
@@ -88,7 +90,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(data);
         byteBuff.put(seckey);
 
@@ -133,7 +136,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        safeRewind(byteBuff);
         byteBuff.put(data);
         byteBuff.put(seckey);
         byteBuff.put(entropy);
@@ -171,7 +174,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(seckey);
 
         r.lock();
@@ -199,7 +203,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(seckey);
 
         byte[][] retByteArray;
@@ -255,7 +260,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(seckey);
         byteBuff.put(tweak);
 
@@ -294,7 +300,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(seckey);
         byteBuff.put(tweak);
 
@@ -334,7 +341,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(pubkey);
         byteBuff.put(tweak);
 
@@ -374,7 +382,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(pubkey);
         byteBuff.put(tweak);
 
@@ -412,7 +421,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(pubkey);
 
         byte[][] retByteArray;
@@ -441,12 +451,31 @@ public class NativeSecp256k1 {
      * @param pubkey ECDSA Public key, 33 or 65 bytes
      */
     public static boolean isValidPubKey(byte[] pubkey) {
-        try {
-            decompress(pubkey);
-            return true;
-        } catch (Throwable e) {
+        if (!(pubkey.length == 33 || pubkey.length == 65)) {
             return false;
         }
+
+        ByteBuffer byteBuff = nativeECDSABuffer.get();
+        if (byteBuff == null || byteBuff.capacity() < pubkey.length) {
+            byteBuff = ByteBuffer.allocateDirect(pubkey.length);
+            byteBuff.order(ByteOrder.nativeOrder());
+            nativeECDSABuffer.set(byteBuff);
+        }
+
+        safeRewind(byteBuff);
+        byteBuff.put(pubkey);
+
+        byte[][] retByteArray;
+        r.lock();
+        try {
+            retByteArray = secp256k1_ec_pubkey_decompress(byteBuff, Secp256k1Context.getContext(), pubkey.length);
+        } finally {
+            r.unlock();
+        }
+
+        int retVal = new BigInteger(new byte[] { retByteArray[1][1] }).intValue();
+
+        return retVal == 1;
     }
 
     /**
@@ -464,7 +493,8 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+
+        safeRewind(byteBuff);
         byteBuff.put(seckey);
         byteBuff.put(pubkey);
 
@@ -490,7 +520,7 @@ public class NativeSecp256k1 {
      *
      * @param seed 32-byte random seed
      */
-    public static synchronized boolean randomize(byte[] seed) {
+    public static synchronized boolean randomize(byte[] seed) throws AssertFailException{
         checkArgument(seed.length == 32);
 
         ByteBuffer byteBuff = nativeECDSABuffer.get();
@@ -499,7 +529,7 @@ public class NativeSecp256k1 {
             byteBuff.order(ByteOrder.nativeOrder());
             nativeECDSABuffer.set(byteBuff);
         }
-        byteBuff.rewind();
+        safeRewind(byteBuff);
         byteBuff.put(seed);
 
         w.lock();
@@ -508,6 +538,20 @@ public class NativeSecp256k1 {
         } finally {
           w.unlock();
         }
+    }
+
+
+    /**
+     * This helper method is needed to resolve issue 1524 on bitcoin-s
+     * This is because the API changed for ByteBuffer between jdks < 9 and jdk >= 9
+     * In the earlier versions of the jdk, a [[java.nio.Buffer]] is returned, but greather than jdk 8
+     * returns a [[ByteBuffer]]. This causes issues when compiling with jdk 11 but running with jdk 8
+     * as the APIs are incompatible.
+     * @see https://github.com/bitcoin-s/bitcoin-s/issues/1524
+     * @param byteBuff
+     */
+    private static void safeRewind(ByteBuffer byteBuff) {
+        ((Buffer) byteBuff).rewind();
     }
 
     private static native long secp256k1_ctx_clone(long context);

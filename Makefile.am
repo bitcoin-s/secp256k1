@@ -135,7 +135,6 @@ JAVAORG=org/bitcoin
 JAVA_FILES= \
   $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1.java \
   $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1Test.java \
-  $(JAVAROOT)/$(JAVAORG)/NativeSecp256k1Util.java \
   $(JAVAROOT)/$(JAVAORG)/Secp256k1Context.java
 
 if USE_JNI
