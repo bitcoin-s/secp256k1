@@ -1,11 +1,8 @@
 package org.bitcoin;
 
-import org.junit.Test;
-
 import java.math.BigInteger;
 
-import static org.bitcoin.NativeSecp256k1Util.AssertFailException;
-import static org.bitcoin.NativeSecp256k1Util.assertEquals;
+import static org.bitcoin.NativeSecp256k1Util.*;
 
 /**
  * This class holds test cases defined for testing this library.
@@ -16,8 +13,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests verify() for a valid signature
       */
-    @Test
-    public void testVerifyPos() throws AssertFailException{
+    public static void testVerifyPos() throws AssertFailException{
         byte[] data = toByteArray("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A90"); //sha256hash of "testing"
         byte[] sig = toByteArray("3044022079BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F817980220294F14E883B3F525B5367756C2A11EF6CF84B730B36C17CB0C56F0AAB2C98589");
         byte[] pub = toByteArray("040A629506E1B65CD9D2E0BA9C75DF9C4FED0DB16DC9625ED14397F0AFC836FAE595DC53F8B0EFE61E703075BD9B143BAC75EC0E19F82A2208CAEB32BE53414C40");
@@ -29,8 +25,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests verify() for a non-valid signature
       */
-    @Test
-    public void testVerifyNeg() throws AssertFailException{
+    public static void testVerifyNeg() throws AssertFailException{
         byte[] data = toByteArray("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A91"); //sha256hash of "testing"
         byte[] sig = toByteArray("3044022079BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F817980220294F14E883B3F525B5367756C2A11EF6CF84B730B36C17CB0C56F0AAB2C98589");
         byte[] pub = toByteArray("040A629506E1B65CD9D2E0BA9C75DF9C4FED0DB16DC9625ED14397F0AFC836FAE595DC53F8B0EFE61E703075BD9B143BAC75EC0E19F82A2208CAEB32BE53414C40");
@@ -42,8 +37,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests secret key verify() for a valid secretkey
       */
-    @Test
-    public void testSecKeyVerifyPos() throws AssertFailException{
+    public static void testSecKeyVerifyPos() throws AssertFailException{
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
 
         boolean result = NativeSecp256k1.secKeyVerify( sec );
@@ -53,8 +47,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests secret key verify() for a invalid secretkey
       */
-    @Test
-    public void testSecKeyVerifyNeg() throws AssertFailException{
+    public static void testSecKeyVerifyNeg() throws AssertFailException{
         byte[] sec = toByteArray("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
         boolean result = NativeSecp256k1.secKeyVerify( sec );
@@ -64,8 +57,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests public key create() for a valid secretkey
       */
-    @Test
-    public void testPubKeyCreatePos() throws AssertFailException{
+    public static void testPubKeyCreatePos() throws AssertFailException{
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
 
         byte[] resultArr = NativeSecp256k1.computePubkey(sec, false);
@@ -76,8 +68,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests public key create() for a invalid secretkey
       */
-    @Test
-    public void testPubKeyCreateNeg() throws AssertFailException{
+    public static void testPubKeyCreateNeg() throws AssertFailException{
        byte[] sec = toByteArray("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
        byte[] resultArr = NativeSecp256k1.computePubkey(sec, false);
@@ -88,8 +79,7 @@ public class NativeSecp256k1Test {
     /**
      * This tests sign() for a valid secretkey
      */
-    @Test
-    public void testSignPos() throws AssertFailException{
+    public static void testSignPos() throws AssertFailException{
 
         byte[] data = toByteArray("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A90"); //sha256hash of "testing"
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
@@ -102,8 +92,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests sign() for a invalid secretkey
       */
-    @Test
-    public void testSignNeg() throws AssertFailException{
+    public static void testSignNeg() throws AssertFailException{
         byte[] data = toByteArray("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A90"); //sha256hash of "testing"
         byte[] sec = toByteArray("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
@@ -115,8 +104,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests signWithEntropy() for a valid secretkey
       */
-    @Test
-    public void testSignWithEntropyPos() throws AssertFailException{
+    public static void testSignWithEntropyPos() throws AssertFailException{
 
         byte[] data = toByteArray("53702647283D86B3D6410ADEF184EC608372CC3DD8B9202795D731EB1EA54275");
         byte[] sec = toByteArray("B4F62DE42D38D5D24B66FF01761C3FD0A6E7C8B719E0DC54D168FA013BFAF97F");
@@ -130,8 +118,7 @@ public class NativeSecp256k1Test {
     /**
      * This tests signWithEntropy() for a invalid secretkey
      */
-    @Test
-    public void testSignWithEntropyNeg() throws AssertFailException{
+    public static void testSignWithEntropyNeg() throws AssertFailException{
         byte[] data = toByteArray("CF80CD8AED482D5D1527D7DC72FCEFF84E6326592848447D2DC0B0E87DFC9A90"); //sha256hash of "testing"
         byte[] sec = toByteArray("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
         byte[] entropy = toByteArray("EDF312C904B610B11442320FFB94C4F976831051A481A17176CE2B81EB3A8B6F");
@@ -144,8 +131,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests private key tweak-add
       */
-    @Test
-    public void testPrivKeyTweakAdd() throws AssertFailException {
+    public static void testPrivKeyTweakAdd() throws AssertFailException {
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
         byte[] data = toByteArray("3982F19BEF1615BCCFBB05E321C10E1D4CBA3DF0E841C2E41EEB6016347653C3"); //sha256hash of "tweak"
 
@@ -157,8 +143,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests private key tweak-mul
       */
-    @Test
-    public void testPrivKeyTweakMul() throws AssertFailException {
+    public static void testPrivKeyTweakMul() throws AssertFailException {
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
         byte[] data = toByteArray("3982F19BEF1615BCCFBB05E321C10E1D4CBA3DF0E841C2E41EEB6016347653C3"); //sha256hash of "tweak"
 
@@ -170,8 +155,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests public key tweak-add
       */
-    @Test
-    public void testPubKeyTweakAdd() throws AssertFailException {
+    public static void testPubKeyTweakAdd() throws AssertFailException {
         byte[] pub = toByteArray("040A629506E1B65CD9D2E0BA9C75DF9C4FED0DB16DC9625ED14397F0AFC836FAE595DC53F8B0EFE61E703075BD9B143BAC75EC0E19F82A2208CAEB32BE53414C40");
         byte[] data = toByteArray("3982F19BEF1615BCCFBB05E321C10E1D4CBA3DF0E841C2E41EEB6016347653C3"); //sha256hash of "tweak"
 
@@ -186,8 +170,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests public key tweak-mul
       */
-    @Test
-    public void testPubKeyTweakMul() throws AssertFailException {
+    public static void testPubKeyTweakMul() throws AssertFailException {
         byte[] pub = toByteArray("040A629506E1B65CD9D2E0BA9C75DF9C4FED0DB16DC9625ED14397F0AFC836FAE595DC53F8B0EFE61E703075BD9B143BAC75EC0E19F82A2208CAEB32BE53414C40");
         byte[] data = toByteArray("3982F19BEF1615BCCFBB05E321C10E1D4CBA3DF0E841C2E41EEB6016347653C3"); //sha256hash of "tweak"
 
@@ -202,8 +185,7 @@ public class NativeSecp256k1Test {
     /**
       * This tests seed randomization
       */
-    @Test
-    public void testRandomize() throws AssertFailException {
+    public static void testRandomize() throws AssertFailException {
         byte[] seed = toByteArray("A441B15FE9A3CF56661190A0B93B9DEC7D04127288CC87250967CF3B52894D11"); //sha256hash of "random"
         boolean result = NativeSecp256k1.randomize(seed);
         assertEquals( result, true, "testRandomize");
@@ -213,8 +195,7 @@ public class NativeSecp256k1Test {
      * Tests that we can decompress valid public keys
      * @throws AssertFailException
      */
-    @Test
-    public void testDecompressPubKey() throws AssertFailException {
+    public static void testDecompressPubKey() throws AssertFailException {
         byte[] compressedPubKey = toByteArray("0315EAB529E7D5EB637214EA8EC8ECE5DCD45610E8F4B7CC76A35A6FC27F5DD981");
 
         byte[] result1 = NativeSecp256k1.decompress(compressedPubKey);
@@ -229,8 +210,7 @@ public class NativeSecp256k1Test {
      * Tests that we can check validity of public keys
      * @throws AssertFailException
      */
-    @Test
-    public void testIsValidPubKeyPos() throws AssertFailException {
+    public static void testIsValidPubKeyPos() throws AssertFailException {
         byte[] pubkey = toByteArray("0456b3817434935db42afda0165de529b938cf67c7510168a51b9297b1ca7e4d91ea59c64516373dd2fe6acc79bb762718bc2659fa68d343bdb12d5ef7b9ed002b");
         byte[] compressedPubKey = toByteArray("03de961a47a519c5c0fc8e744d1f657f9ea6b9a921d2a3bceb8743e1885f752676");
 
@@ -239,8 +219,8 @@ public class NativeSecp256k1Test {
         assertEquals(result1, true, "testIsValidPubKeyPos");
         assertEquals(result2, true, "testIsValidPubKeyPos (compressed)");
     }
-    @Test
-    public void testIsValidPubKeyNeg() throws AssertFailException {
+
+    public static void testIsValidPubKeyNeg() throws AssertFailException {
         //do we have test vectors some where to test this more thoroughly?
         byte[] pubkey = toByteArray("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
@@ -248,8 +228,8 @@ public class NativeSecp256k1Test {
         assertEquals(result1, false, "testIsValidPubKeyNeg");
     }
 
-    @Test
-    public void testCreateECDHSecret() throws AssertFailException{
+
+    public static void testCreateECDHSecret() throws AssertFailException{
         byte[] sec = toByteArray("67E56582298859DDAE725F972992A07C6C4FB9F62A8FFF58CE3CA926A1063530");
         byte[] pub = toByteArray("040A629506E1B65CD9D2E0BA9C75DF9C4FED0DB16DC9625ED14397F0AFC836FAE595DC53F8B0EFE61E703075BD9B143BAC75EC0E19F82A2208CAEB32BE53414C40");
 
@@ -281,6 +261,60 @@ public class NativeSecp256k1Test {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    //https://github.com/real-or-random/secp256k1/blob/2abcf951af6a9e8aff7398eb9588a50339b720c7/src/java/org/bitcoin/NativeSecp256k1Test.java#L179
+    //run with 
+    // ./autogen.sh && ./configure --enable-jni --enable-experimental --enable-module-ecdh && make && make check-java
+    public static void main(String[] args) throws AssertFailException{
+
+
+        System.out.println("\n libsecp256k1 enabled: " + Secp256k1Context.isEnabled() + "\n");
+
+        assertEquals( Secp256k1Context.isEnabled(), true, "isEnabled" );
+
+        //Test verify() success/fail
+        testVerifyPos();
+        testVerifyNeg();
+
+        //Test secKeyVerify() success/fail
+        testSecKeyVerifyPos();
+        testSecKeyVerifyNeg();
+
+
+        //Test computePubkey() success/fail
+        testPubKeyCreatePos(); 
+        testPubKeyCreateNeg();
+
+        //Test sign() success/fail
+        testSignPos();
+        testSignNeg();
+
+        testSignWithEntropyPos();
+        testSignWithEntropyNeg();
+
+        //Test privKeyTweakAdd() 1
+        testPrivKeyTweakAdd();
+        testPrivKeyTweakMul();
+
+        testPubKeyTweakAdd();
+        testPubKeyTweakMul();
+
+        //Test randomize()
+        testRandomize();
+
+        testDecompressPubKey();
+
+        testIsValidPubKeyPos();
+        testIsValidPubKeyNeg();
+
+        //Test ECDH
+        testCreateECDHSecret();
+
+        NativeSecp256k1.cleanup();
+
+        System.out.println(" All tests passed." );
+
     }
 
 }
